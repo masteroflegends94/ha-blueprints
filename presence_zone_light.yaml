@@ -1,0 +1,379 @@
+blueprint:
+  name: Presence-Zone Light
+  description: >
+    * Zone Presence and Lights of People & Devices
+
+    ** Version 0.1 **
+
+    Activate your lights and specific scenes when motion is detected.
+
+    The script switches between scenes based on the occupancy of zones
+  domain: automation
+  author: masteroflegends94
+  input:
+    trigger_motion:
+      name: "Trigger - Entity State"
+      selector:
+        entity:
+          filter:
+            - device_class: occupancy
+              domain: binary_sensor
+            - device_class: motion
+              domain: binary_sensor
+    target_motion:
+      name: "Main action to do when motion is detected"
+      description: "This is the minimum action that is done when motion is detected"
+      selector:
+        action: {}
+    night_light_boolean:
+      name: "Define if a specific night scene shall be activated during the night period"
+      selector:
+        boolean: {}
+      default: false
+    night_light_action:
+      name: "Define what action shall be performed during the night time"
+      default: []
+      selector:
+        action: {}
+    night_light_start:
+      name: "Define the start time for the night action"
+      selector:
+        time:
+      default: "22:00:00"
+    night_light_end:
+      name: "Define the end time for the night action"
+      selector:
+        time:
+      default: "07:00:00"
+    target_light:
+      name: "Define Light that gets turned off"
+      selector:
+        target:
+          entity:
+            domain: light
+    zone_section:
+      name: "Section for Zones"
+      description: "Define up to 4 zones which are used as triggers for actions"
+      collapsed: true
+      input:
+        trigger_zone1:
+          name: "Trigger for Zone 1"
+          default: []
+          selector:
+            entity:
+              filter:
+                - device_class: occupancy
+                  domain: binary_sensor
+                - device_class: motion
+                  domain: binary_sensor
+        trigger_zone2:
+          name: "Trigger for Zone 2"
+          default: []
+          selector:
+            entity:
+              filter:
+                - device_class: occupancy
+                  domain: binary_sensor
+                - device_class: motion
+                  domain: binary_sensor
+        trigger_zone3:
+          name: "Trigger for Zone 3"
+          default: []
+          selector:
+            entity:
+              filter:
+                - device_class: occupancy
+                  domain: binary_sensor
+                - device_class: motion
+                  domain: binary_sensor
+        trigger_zone4:
+          name: "Trigger for Zone 3"
+          default: []
+          selector:
+            entity:
+              filter:
+                - device_class: occupancy
+                  domain: binary_sensor
+                - device_class: motion
+                  domain: binary_sensor
+    zone_conditions:
+      name: "Sections to define conditions for the automations"
+      description: "Define conditions which prevent the actions to start"
+      collapsed: true
+      input:
+        sun_mode:
+          name: "Trigger the automation only between sunset and sunrise"
+          selector:
+            boolean: {}
+          default: false
+        sunrise_after_offset: 
+          name: "After offset for sunrise in minutes"
+          default: 30 
+          selector:
+            number:
+              min: 0
+              max: 600
+              step: 5
+              unit_of_measurement: minutes
+        sunset_before_offset: 
+          name: "Before offset for sunset in minutes"
+          default: 30 
+          selector:
+            number:
+              min: 0
+              max: 600
+              step: 5
+              unit_of_measurement: minutes
+        guest_mode:
+          name: "Optional use a guest mode switch"
+          description: "This option enables the use of a guest mode switch"
+          default: []
+          selector:
+            entity:
+              filter:
+                domain: input_boolean
+        window_state:
+          name: "Optional use a window sensor"
+          description: "Condition to check open window"
+          default: []
+          selector:
+            entity:
+              filter:
+                domain: binary_sensor
+    scene_selection:
+      name: "Section to define actions for scenes"
+      description: "Define what happens for the individual scenes"
+      collapsed: true
+      input:
+        scene_zone1:
+          name: "Define what happes for zone 1"
+          default: []
+          selector:
+            action: {}
+        scene_zone2:
+          name: "Define what happes for zone 2"
+          default: []
+          selector:
+            action: {}
+        scene_zone3:
+          name: "Define what happes for zone 3"
+          default: []
+          selector:
+            action: {}
+        scene_zone4:
+          name: "Define what happes for zone 4"
+          default: []
+          selector:
+            action: {}
+    wait_time:
+      name: Wait time
+      description: Time to leave the light on after last motion is detected.
+      default: 30
+      selector:
+        number:
+          min: 0
+          max: 3600
+          unit_of_measurement: seconds
+
+variables:
+  var_night_boolean: !input night_light_boolean
+  var_sun_mode: !input sun_mode
+
+# If motion is detected within the delay,
+# we restart the script.
+mode: restart
+max_exceeded: silent
+
+triggers:
+  - trigger: state
+    id: "t0"
+    entity_id: !input trigger_motion
+    from: "off"
+    to: "on"
+  - trigger: state
+    id: "t1"
+    entity_id: !input trigger_motion
+    from: "on"
+    to: "off"
+  - trigger: state
+    id: "t2"
+    entity_id: !input trigger_zone1
+    from: "off"
+    to: "on"
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 10
+  - trigger: state
+    id: "t3"
+    entity_id: !input trigger_zone1
+    from: "on"
+    to: "off"
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 10
+  - trigger: state
+    id: "t4"
+    entity_id: !input trigger_zone2
+    from: "off"
+    to: "on"
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 5
+  - trigger: state
+    id: "t5"
+    entity_id: !input trigger_zone2
+    from: "on"
+    to: "off"
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 5
+  - trigger: state
+    id: "t6"
+    entity_id: !input trigger_zone3
+    from: "off"
+    to: "on"
+  - trigger: state
+    id: "t7"
+    entity_id: !input trigger_zone3
+    from: "on"
+    to: "off"
+  - trigger: state
+    id: "t8"
+    entity_id: !input trigger_zone4
+    from: "off"
+    to: "on"
+  - trigger: state
+    id: "t9"
+    entity_id: !input trigger_zone4
+    from: "on"
+    to: "off"
+
+# This block needs to be changed so that the conditions match what the current automation has
+condition:
+  - condition: state
+    entity_id: !input guest_mode
+    state: "off"
+  - condition: state
+    entity_id: !input window_state
+    state: "off"
+  - condition: or
+    conditions:
+      - condition: template
+        value_template: "{{ not(var_sun_mode) }}"
+      - condition: and
+        conditions:
+          - condition: template
+            value_template: "{{ var_sun_mode }}"
+          - condition: sun
+            after: sunrise
+            after_offset: !input sunrise_after_offset 
+            before: sunset
+            before_offset: "30"
+
+# This block needs to changed so that the light goes on and off when it is intended to do
+action:
+  - choose:
+    - conditions:
+        - condition: state
+          entity_id: !input trigger_motion
+          state: "on"
+        - condition: state
+          entity_id: !input trigger_zone1
+          state: "off"
+        - condition: state
+          entity_id: !input trigger_zone2
+          state: "off"
+        - condition: state
+          entity_id: !input trigger_zone3
+          state: "off"
+        - condition: state
+          entity_id: !input trigger_zone4
+          state: "off"
+      sequence:
+        - if: 
+          - condition: template
+            value_template: "{{ not(var_night_boolean) }}"
+          then: 
+            - choose: []
+              default: !input target_motion
+          else:
+            - if:
+              - condition: time
+                after: !input night_light_end
+                before: !input night_light_start
+              then:
+                - choose: []
+                  default: !input target_motion
+              else:
+                - choose: []
+                  default: !input night_light_action
+    - conditions:
+        - condition: state
+          entity_id: !input trigger_motion
+          state: "on"
+        - condition: state
+          entity_id: !input trigger_zone1
+          state: "on"
+          for:
+            hours: 0
+            minutes: 0
+            seconds: 10
+        - condition: state
+          entity_id: !input trigger_zone2
+          state: "off"
+        - condition: state
+          entity_id: !input trigger_zone3
+          state: "off"
+        - condition: state
+          entity_id: !input trigger_zone4
+          state: "off"
+      sequence:
+        - choose: []
+          default: !input scene_zone1
+    - conditions:
+        - condition: state
+          entity_id: !input trigger_motion
+          state: "on"
+        - condition: state
+          entity_id: !input trigger_zone1
+          state: "off"
+        - condition: state
+          entity_id: !input trigger_zone2
+          state: "on"
+          for:
+            hours: 0
+            minutes: 0
+            seconds: 5
+        - condition: state
+          entity_id: !input trigger_zone3
+          state: "off"
+        - condition: state
+          entity_id: !input trigger_zone4
+          state: "off"
+      sequence:
+        - choose: []
+          default: !input scene_zone2
+    - conditions:
+        - condition: state
+          entity_id: !input trigger_motion
+          state: "off"
+        - condition: state
+          entity_id: !input trigger_zone1
+          state: "off"
+        - condition: state
+          entity_id: !input trigger_zone2
+          state: "off"
+        - condition: state
+          entity_id: !input trigger_zone3
+          state: "off"
+        - condition: state
+          entity_id: !input trigger_zone4
+          state: "off"
+      sequence:
+        - alias: "Turn off the light"
+          service: light.turn_off
+          target: !input target_light
