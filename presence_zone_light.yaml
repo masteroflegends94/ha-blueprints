@@ -3,7 +3,7 @@ blueprint:
   description: >
     * Zone Presence and Lights of People & Devices
 
-    ** Version 0.1 **
+    ** Version 0.2 **
 
     Activate your lights and specific scenes when motion is detected.
 
@@ -140,6 +140,23 @@ blueprint:
             entity:
               filter:
                 domain: binary_sensor
+        illuminance_entity:
+          name: "Define an illuminance sensor that stop the automation"
+          description: "Condition to check the illuminance"
+          default: []
+          selector:
+            entity:
+              device_class: illuminance
+              domain: sensor
+        illuminance_value:
+          name: "Define the threshold value for the illumance sensor"
+          default: 30
+          selector:
+            number:
+              min: 1
+              max: 1000
+              step: 5
+              unit_of_measurement: lx
     scene_selection:
       name: "Section to define actions for scenes"
       description: "Define what happens for the individual scenes"
@@ -165,10 +182,15 @@ blueprint:
           default: []
           selector:
             action: {}
+        scene_multiple_zones:
+          name: "Define what happens if more than 1 zone is occupied"
+          default: []
+          selector:
+            action: {}
     wait_time:
       name: Wait time
       description: Time to leave the light on after last motion is detected.
-      default: 30
+      default: 5
       selector:
         number:
           min: 0
@@ -200,37 +222,21 @@ triggers:
     entity_id: !input trigger_zone1
     from: "off"
     to: "on"
-    for:
-      hours: 0
-      minutes: 0
-      seconds: 10
   - trigger: state
     id: "t3"
     entity_id: !input trigger_zone1
     from: "on"
     to: "off"
-    for:
-      hours: 0
-      minutes: 0
-      seconds: 10
   - trigger: state
     id: "t4"
     entity_id: !input trigger_zone2
     from: "off"
     to: "on"
-    for:
-      hours: 0
-      minutes: 0
-      seconds: 5
   - trigger: state
     id: "t5"
     entity_id: !input trigger_zone2
     from: "on"
     to: "off"
-    for:
-      hours: 0
-      minutes: 0
-      seconds: 5
   - trigger: state
     id: "t6"
     entity_id: !input trigger_zone3
@@ -273,6 +279,9 @@ condition:
             after_offset: !input sunrise_after_offset 
             before: sunset
             before_offset: "30"
+  - condition: numeric_state
+    entity_id: !input illuminance_entity
+    below: !input illuminance_value
 
 # This block needs to changed so that the light goes on and off when it is intended to do
 action:
@@ -344,10 +353,6 @@ action:
         - condition: state
           entity_id: !input trigger_zone2
           state: "on"
-          for:
-            hours: 0
-            minutes: 0
-            seconds: 5
         - condition: state
           entity_id: !input trigger_zone3
           state: "off"
@@ -357,6 +362,19 @@ action:
       sequence:
         - choose: []
           default: !input scene_zone2
+    - conditions:
+        - condition: template
+          value_template: >
+            {{
+              (is_state('!input trigger_zone1', 'on') | int) +
+              (is_state('!input trigger_zone2', 'on') | int) +
+              (is_state('!input trigger_zone3', 'on') | int) +
+              (is_state('!input trigger_zone4', 'on') | int)
+              > 1
+            }}
+      sequence:
+        - choose: []
+          default: !input scene_multiple_zones
     - conditions:
         - condition: state
           entity_id: !input trigger_motion
